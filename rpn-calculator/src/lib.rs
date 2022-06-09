@@ -19,16 +19,15 @@ pub fn evaluate(inputs: &[CalculatorInput]) -> Option<i32> {
                 }
                 let (a, b) = (stack.pop().unwrap(), stack.pop().unwrap());
 
-                let mut result_add = None;
-                match a {
+                let result_add = match a {
                     CalculatorInput::Value(a) => match b {
                         CalculatorInput::Value(b) => {
-                            result_add = Some(CalculatorInput::Value(a + b))
+                            Some(CalculatorInput::Value(a + b))
                         }
-                        _ => result_add = None,
+                        _ => None,
                     },
-                    _ => result_add = None,
-                }
+                    _ => None,
+                };
 
                 if result_add.is_some() {
                     stack.push(result_add.unwrap());
@@ -42,16 +41,15 @@ pub fn evaluate(inputs: &[CalculatorInput]) -> Option<i32> {
                 }
                 let (a, b) = (stack.pop().unwrap(), stack.pop().unwrap());
 
-                let mut result_subtract = None;
-                match a {
+                let result_subtract = match a {
                     CalculatorInput::Value(a) => match b {
                         CalculatorInput::Value(b) => {
-                            result_subtract = Some(CalculatorInput::Value(b - a))
+                            Some(CalculatorInput::Value(b - a))
                         }
-                        _ => result_subtract = None,
+                        _ => None,
                     },
-                    _ => result_subtract = None,
-                }
+                    _ => None,
+                };
 
                 if result_subtract.is_some() {
                     stack.push(result_subtract.unwrap());
@@ -65,16 +63,15 @@ pub fn evaluate(inputs: &[CalculatorInput]) -> Option<i32> {
                 }
                 let (a, b) = (stack.pop().unwrap(), stack.pop().unwrap());
 
-                let mut result_multiply = None;
-                match a {
+                let result_multiply = match a {
                     CalculatorInput::Value(a) => match b {
                         CalculatorInput::Value(b) => {
-                            result_multiply = Some(CalculatorInput::Value(a * b))
+                            Some(CalculatorInput::Value(a * b))
                         }
-                        _ => result_multiply = None,
+                        _ => None,
                     },
-                    _ => result_multiply = None,
-                }
+                    _ => None,
+                };
 
                 if result_multiply.is_some() {
                     stack.push(result_multiply.unwrap());
@@ -88,16 +85,15 @@ pub fn evaluate(inputs: &[CalculatorInput]) -> Option<i32> {
                 }
                 let (a, b) = (stack.pop().unwrap(), stack.pop().unwrap());
 
-                let mut result_divide = None;
-                match a {
+                let result_divide = match a {
                     CalculatorInput::Value(a) => match b {
                         CalculatorInput::Value(b) => {
-                            result_divide = Some(CalculatorInput::Value(b / a))
+                            Some(CalculatorInput::Value(b / a))
                         }
-                        _ => result_divide = None,
+                        _ => None,
                     },
-                    _ => result_divide = None,
-                }
+                    _ => None,
+                };
 
                 if result_divide.is_some() {
                     stack.push(result_divide.unwrap());
@@ -119,6 +115,6 @@ pub fn evaluate(inputs: &[CalculatorInput]) -> Option<i32> {
             }
         }
     }
-    
+
     result
 }
