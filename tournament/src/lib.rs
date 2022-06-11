@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use std::vec::Vec;
+use std::cmp::Ordering;
 
 struct ScoreTable {
     matches_played: i32,
@@ -11,12 +12,16 @@ struct ScoreTable {
 pub fn tally(match_results: &str) -> String {
     let score_lines_raw = match_results.split("\n").collect::<Vec<&str>>();
 
-    let mut score_map: HashMap<&str, ScoreTable> = HashMap::new();
+    let mut score_map: Vec<(&str, ScoreTable)> = Vec::new();
 
     for line in score_lines_raw {
         let mut score_line: Vec<&str> = Vec::new();
         for info in line.split(";") {
             score_line.push(info);
+        }
+
+        if score_line.len() != 3 {
+            break;
         }
 
         let left_side_name = score_line[0];
@@ -43,18 +48,18 @@ pub fn tally(match_results: &str) -> String {
             }
         }
 
-        if let Some(score) = score_map.get_mut(left_side_name) {
-            score.matches_played += 1;
+        if let Some(score) = score_map.iter_mut().find(|x| x.0 == left_side_name) {
+            score.1.matches_played += 1;
 
             if left_side_score > right_side_score {
-                score.won += 1;
+                score.1.won += 1;
             } else if left_side_score < right_side_score  {
-                score.lost += 1;
+                score.1.lost += 1;
             } else {
-                score.draw += 1;
+                score.1.draw += 1;
             }
 
-            score.points += left_side_score;
+            score.1.points += left_side_score;
 
         } else {
             let new_score = ScoreTable {
@@ -65,21 +70,21 @@ pub fn tally(match_results: &str) -> String {
                 points: left_side_score,
             };
 
-            score_map.insert(left_side_name, new_score);
+            score_map.push((left_side_name, new_score));
         }
 
-        if let Some(score) = score_map.get_mut(right_side_name) {
-            score.matches_played += 1;
+        if let Some(score) =  score_map.iter_mut().find(|x| x.0 == right_side_name) {
+            score.1.matches_played += 1;
 
             if right_side_score > left_side_score {
-                score.won += 1;
+                score.1.won += 1;
             } else if right_side_score < left_side_score  {
-                score.lost += 1;
+                score.1.lost += 1;
             } else {
-                score.draw += 1;
+                score.1.draw += 1;
             }
 
-            score.points += right_side_score;
+            score.1.points += right_side_score;
 
         } else {
             let new_score = ScoreTable {
@@ -90,9 +95,16 @@ pub fn tally(match_results: &str) -> String {
                 points: right_side_score,
             };
 
-            score_map.insert(right_side_name, new_score);
+            score_map.push((right_side_name, new_score));
         }
     }
+
+    score_map.sort_by(|a, b| {
+        match b.1.points.cmp(&a.1.points) {
+            Ordering::Equal => b.0.cmp(&a.0).reverse(),
+            other => other,
+        }
+    });
 
     // @todo sort hash map by points
 
@@ -114,9 +126,16 @@ pub fn tally(match_results: &str) -> String {
 
     let return_score_size = return_score.len();
 
-    return_score[return_score_size - 1].pop();
+    if return_score_size > 0 {
+        return_score[return_score_size - 1].pop();
+        return_score.insert(0, "Team                           | MP |  W |  D |  L |  P\n".to_string());
+    }
+    else
+    {
+        return_score.insert(0, "Team                           | MP |  W |  D |  L |  P".to_string());
+    }
 
-    return_score.insert(0, "Team                           | MP |  W |  D |  L |  P\n".to_string());
+    
 
     return_score.join("")
 }
