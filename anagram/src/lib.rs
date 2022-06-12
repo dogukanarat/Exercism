@@ -3,14 +3,12 @@ use std::collections::HashMap;
 
 pub fn anagrams_for<'a>(word: &str, possible_anagrams: &[&'a str]) -> HashSet<&'a str> {
     let mut result : HashSet<&'a str> = HashSet::new();
-    let mut character_map : HashMap<u8, i32> = HashMap::new();
-    let mut lowercase_word = word.to_lowercase().bytes().collect::<Vec<u8>>();
-    let lowercase_word_unsorted = word.to_lowercase().bytes().collect::<Vec<u8>>();
+    let mut character_map : HashMap<char, i32> = HashMap::new();
 
-    lowercase_word.sort();
+    let lowercase_word = word.to_lowercase();
 
-    lowercase_word.iter().for_each(|character| {
-        let count = character_map.entry(*character).or_insert(1);
+    lowercase_word.chars().for_each(|c| {
+        let count = character_map.entry(c).or_insert(0);
         *count += 1;
     });
 
@@ -20,26 +18,16 @@ pub fn anagrams_for<'a>(word: &str, possible_anagrams: &[&'a str]) -> HashSet<&'
             continue;
         }
 
-        let mut temp_character_map : HashMap<u8, i32> = HashMap::new();
+        let mut temp_character_map : HashMap<char, i32> = HashMap::new();
 
-        lowercase_possible_anagram.bytes().for_each(|b| {
-            let count = temp_character_map.entry(b).or_insert(1);
+        lowercase_possible_anagram.chars().for_each(|b| {
+            let count = temp_character_map.entry(b).or_insert(0);
             *count += 1;
         });
 
         if character_map == temp_character_map {
-            if let Ok(string) = String::from_utf8(lowercase_word_unsorted.clone())
-            {
-                if word.len() != string.chars().count() {
-                    continue;
-                }
-                if !word.is_ascii()
-                {
-                    continue;
-                }
-                if string != lowercase_possible_anagram {
-                    result.insert(possible_anagram);
-                }
+            if lowercase_word != lowercase_possible_anagram {
+                result.insert(possible_anagram);
             }
         }
 
