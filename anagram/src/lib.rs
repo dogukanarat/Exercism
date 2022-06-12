@@ -1,14 +1,16 @@
 use std::collections::HashSet;
 use std::collections::HashMap;
-use std::char::*;
 
 pub fn anagrams_for<'a>(word: &str, possible_anagrams: &[&'a str]) -> HashSet<&'a str> {
     let mut result : HashSet<&'a str> = HashSet::new();
     let mut character_map : HashMap<u8, i32> = HashMap::new();
-    let lowercase_word = word.to_lowercase();
+    let mut lowercase_word = word.to_lowercase().bytes().collect::<Vec<u8>>();
+    let lowercase_word_unsorted = word.to_lowercase().bytes().collect::<Vec<u8>>();
 
-    lowercase_word.bytes().for_each(|b| {
-        let count = character_map.entry(b).or_insert(1);
+    lowercase_word.sort();
+
+    lowercase_word.iter().for_each(|character| {
+        let count = character_map.entry(*character).or_insert(1);
         *count += 1;
     });
 
@@ -26,11 +28,19 @@ pub fn anagrams_for<'a>(word: &str, possible_anagrams: &[&'a str]) -> HashSet<&'
         });
 
         if character_map == temp_character_map {
-            if lowercase_word != lowercase_possible_anagram
+            if let Ok(string) = String::from_utf8(lowercase_word_unsorted.clone())
             {
-                result.insert(possible_anagram);
+                if word.len() != string.chars().count() {
+                    continue;
+                }
+                if !word.is_ascii()
+                {
+                    continue;
+                }
+                if string != lowercase_possible_anagram {
+                    result.insert(possible_anagram);
+                }
             }
-            
         }
 
     }
