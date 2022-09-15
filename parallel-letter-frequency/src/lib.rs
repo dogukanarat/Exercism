@@ -1,7 +1,7 @@
 
 
 use std::collections::HashMap;
-use std::thread;
+use std::{thread, string};
 use std::thread::JoinHandle;
 use std::sync::mpsc;
 use std::sync::mpsc::{Sender, Receiver};
@@ -30,7 +30,7 @@ fn mergeHashMap(destination: &mut HashMapType, source: HashMapType)
 }
 
 #[allow(non_snake_case)]
-fn parFrequency(_tx: Sender<HashMapType>, _rx : Receiver<&[&str]>) 
+fn parFrequency(_tx: Sender<HashMapType>, _rx: Receiver<&[&str]>) 
 {
     let mut resultHashMap = HashMap::new();
 
@@ -46,14 +46,20 @@ pub fn frequency(input: &[&str], workerCount: usize) -> HashMap<char, usize> {
     let mut hashMapResult = HashMap::new();
 
     // result channel
-    let (channelTxHashMap, channelRxHashMap) = mpsc::channel::<HashMapType>();
+    let (
+        channelTxHashMap, 
+        channelRxHashMap
+    ) = mpsc::channel::<HashMapType>();
     
     // thread collection
     let mut threads: Vec<ThreadType> = Vec::with_capacity(workerCount);
 
     for _ in 0..workerCount {
         // create channel to thread
-        let (channelTxPartialInput, channelRxPartionInput) = mpsc::channel::<&[&str]>();
+        let (
+            channelTxPartialInput, 
+            channelRxPartionInput
+        ) = mpsc::channel::<&[&str]>();
 
         // clone receive channel from thread
         let cloneChannelTx = channelTxHashMap.clone();
@@ -62,10 +68,7 @@ pub fn frequency(input: &[&str], workerCount: usize) -> HashMap<char, usize> {
         
         if let Some(chunk) = iterInputChunks.next()
         {
-            // send the data to input channel
-            let mut partialData = &[];
-
-            let _resultSend = channelTxPartialInput.send(partialData);
+            let _resultSend = channelTxPartialInput.send(chunk);
 
             // create thread
             let currentThread = thread::spawn(|| {
