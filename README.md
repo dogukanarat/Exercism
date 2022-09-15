@@ -1,2 +1,2 @@
-# RustWorkspace
-Rust exercises
+# Exercism Workspace
+Several project to learn new languages
