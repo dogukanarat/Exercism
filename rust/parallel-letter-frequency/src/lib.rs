@@ -1,13 +1,11 @@
 
 
 use std::collections::HashMap;
-use std::{thread, string};
-use std::thread::JoinHandle;
+use std::{thread};
 use std::sync::mpsc;
 use std::sync::mpsc::{Sender, Receiver};
 
 type HashMapType = HashMap<char, usize>;
-type ThreadType = JoinHandle<()>;
 
 #[allow(non_snake_case)]
 fn mergeHashMap(destination: &mut HashMapType, source: HashMapType) 
@@ -30,62 +28,86 @@ fn mergeHashMap(destination: &mut HashMapType, source: HashMapType)
 }
 
 #[allow(non_snake_case)]
-fn parFrequency(_tx: Sender<HashMapType>, _rx: Receiver<&[&str]>) 
+fn parFrequency(tx: Sender<HashMapType>, rx: Receiver<&[u8]>) 
 {
-    let mut resultHashMap = HashMap::new();
+    let mut resultHashMap: HashMap<char, usize> = HashMap::new();
+    let searchContent = rx.recv().unwrap();
 
-    resultHashMap.insert('a', 11);
+    for (_, &currentLetter) in  searchContent.iter().enumerate()
+    {
+        let currentLetterAsChar = (currentLetter as char).to_ascii_lowercase();
 
-    let _result = _tx.send(resultHashMap);
+        if(currentLetter > 64 && currentLetter < 91) || (currentLetter > 96 && currentLetter < 123)
+        {
+            if let Some(refLetter) = resultHashMap.get_mut(&currentLetterAsChar)
+            {
+                *refLetter = *refLetter + 1;
+            }
+            else 
+            {
+                resultHashMap.insert(currentLetterAsChar, 1);
+            }
+        }
+    }
+
+    let _ = tx.send(resultHashMap);
 }
 
 #[allow(non_snake_case)]
-pub fn frequency(input: &[&str], workerCount: usize) -> HashMap<char, usize> {
-
+pub fn frequency(input: &[&str], workerCount: usize) -> HashMap<char, usize> 
+{
     // result hashmap
     let mut hashMapResult = HashMap::new();
+
+    let mut createdThreadCount = 0;
 
     // result channel
     let (
         channelTxHashMap, 
         channelRxHashMap
     ) = mpsc::channel::<HashMapType>();
-    
-    // thread collection
-    let mut threads: Vec<ThreadType> = Vec::with_capacity(workerCount);
 
-    for _ in 0..workerCount {
-        // create channel to thread
-        let (
-            channelTxPartialInput, 
-            channelRxPartionInput
-        ) = mpsc::channel::<&[&str]>();
+    let mut content: String = String::new();
 
-        // clone receive channel from thread
-        let cloneChannelTx = channelTxHashMap.clone();
+    for (_, &sentence) in  input.iter().enumerate()
+    {
+        content.push_str(sentence);
+    }
 
-        let mut iterInputChunks = input.chunks(2);
+    let contentSize = content.as_bytes().len();
+
+    if contentSize > workerCount
+    {
+        let mut itContentChunks = content.as_bytes().chunks(contentSize / workerCount);
+
+        thread::scope(|scope| {
+
+            for _ in 0..workerCount {
+                // create channel to thread
+                let (
+                    channelTxPartialInput, 
+                    channelRxPartionInput
+                ) = mpsc::channel::<&[u8]>();
         
-        if let Some(chunk) = iterInputChunks.next()
-        {
-            let _resultSend = channelTxPartialInput.send(chunk);
-
-            // create thread
-            let currentThread = thread::spawn(|| {
-                parFrequency(cloneChannelTx, channelRxPartionInput);
-            });
-
-            // push created thread to vector
-            threads.push(currentThread);
-        }
+                // clone receive channel from thread
+                let cloneChannelTx = channelTxHashMap.clone();
+    
+                if let Some(chunk) = itContentChunks.next()
+                {
+                    let _ = channelTxPartialInput.send(chunk);
+        
+                    // create thread
+                    scope.spawn(|| {
+                        parFrequency(cloneChannelTx, channelRxPartionInput);
+                    });
+    
+                    createdThreadCount += 1;
+                }
+            }
+        });
     }
 
-    while threads.len() > 0 {
-        let currenThread = threads.remove(0);
-        currenThread.join().unwrap();
-    }
-
-    for _ in 0..workerCount {
+    for _ in 0..createdThreadCount {
         
         if let Ok(currentHashMap)= channelRxHashMap.recv()
         {
