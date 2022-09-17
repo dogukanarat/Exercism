@@ -28,24 +28,24 @@ fn mergeHashMap(destination: &mut HashMapType, source: HashMapType)
 }
 
 #[allow(non_snake_case)]
-fn parFrequency(tx: Sender<HashMapType>, rx: Receiver<&[u8]>) 
+fn parFrequency(tx: Sender<HashMapType>, rx: Receiver<&[char]>) 
 {
     let mut resultHashMap: HashMap<char, usize> = HashMap::new();
     let searchContent = rx.recv().unwrap();
 
     for (_, &currentLetter) in  searchContent.iter().enumerate()
     {
-        let currentLetterAsChar = (currentLetter as char).to_ascii_lowercase();
+        let currentLetterLowerCase = currentLetter.to_ascii_lowercase();
 
-        if(currentLetter > 64 && currentLetter < 91) || (currentLetter > 96 && currentLetter < 123)
+        if currentLetter.is_alphabetic()
         {
-            if let Some(refLetter) = resultHashMap.get_mut(&currentLetterAsChar)
+            if let Some(refLetter) = resultHashMap.get_mut(&currentLetterLowerCase)
             {
                 *refLetter = *refLetter + 1;
             }
             else 
             {
-                resultHashMap.insert(currentLetterAsChar, 1);
+                resultHashMap.insert(currentLetterLowerCase, 1);
             }
         }
     }
@@ -74,11 +74,13 @@ pub fn frequency(input: &[&str], workerCount: usize) -> HashMap<char, usize>
         content.push_str(sentence);
     }
 
-    let contentSize = content.as_bytes().len();
+    let contentArray: Vec<_> = content.chars().collect();
+    let contentSize = contentArray.len();
+
 
     if contentSize > workerCount
     {
-        let mut itContentChunks = content.as_bytes().chunks(contentSize / workerCount);
+        let mut itContentChunks = contentArray.chunks(contentSize / workerCount);
 
         thread::scope(|scope| {
 
@@ -87,7 +89,7 @@ pub fn frequency(input: &[&str], workerCount: usize) -> HashMap<char, usize>
                 let (
                     channelTxPartialInput, 
                     channelRxPartionInput
-                ) = mpsc::channel::<&[u8]>();
+                ) = mpsc::channel::<&[char]>();
         
                 // clone receive channel from thread
                 let cloneChannelTx = channelTxHashMap.clone();
