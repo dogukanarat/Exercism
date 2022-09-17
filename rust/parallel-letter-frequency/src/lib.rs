@@ -1,5 +1,4 @@
-
-
+#![feature(scoped_threads)]
 use std::collections::HashMap;
 use std::{thread};
 use std::sync::mpsc;
@@ -108,7 +107,7 @@ pub fn frequency(input: &[&str], workerCount: usize) -> HashMap<char, usize>
             }
         });
     }
-    
+
     for _ in 0..createdThreadCount {
         
         if let Ok(currentHashMap)= channelRxHashMap.recv()
