@@ -76,26 +76,26 @@ pub fn frequency(input: &[&str], workerCount: usize) -> HashMap<char, usize>
 
     let contentArray: Vec<_> = content.chars().collect();
     let contentSize = contentArray.len();
+    let chunkSize = ( contentSize + workerCount - 1) / workerCount;
 
-
-    if contentSize > workerCount
+    if chunkSize != 0
     {
-        let mut itContentChunks = contentArray.chunks(contentSize / workerCount);
+        let mut itContentChunks = contentArray.chunks(chunkSize);
 
         thread::scope(|scope| {
-
-            for _ in 0..workerCount {
-                // create channel to thread
-                let (
-                    channelTxPartialInput, 
-                    channelRxPartionInput
-                ) = mpsc::channel::<&[char]>();
-        
-                // clone receive channel from thread
-                let cloneChannelTx = channelTxHashMap.clone();
     
+            for _ in 0..workerCount {
                 if let Some(chunk) = itContentChunks.next()
                 {
+                    // create channel to thread
+                    let (
+                        channelTxPartialInput, 
+                        channelRxPartionInput
+                    ) = mpsc::channel::<&[char]>();
+            
+                    // clone receive channel from thread
+                    let cloneChannelTx = channelTxHashMap.clone();
+    
                     let _ = channelTxPartialInput.send(chunk);
         
                     // create thread
@@ -108,7 +108,7 @@ pub fn frequency(input: &[&str], workerCount: usize) -> HashMap<char, usize>
             }
         });
     }
-
+    
     for _ in 0..createdThreadCount {
         
         if let Ok(currentHashMap)= channelRxHashMap.recv()
